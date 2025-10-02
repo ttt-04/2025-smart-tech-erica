@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Store Info dApp</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+
+</head>
+
+<body>
+
+
+
+    <h2>Store Info dApp</h2>
+
+    
+
+    <p>Stored Word: <span id="output">Loading...</span></p>
+
+    <p>Stored Number: <span id="number">Loading...</span></p>
+
+
+
+    <input type="text" id="newWord" placeholder="Enter a word">
+
+    <button onclick="setWord()">Set Word</button>
+
+
+
+    <input type="number" id="newNumber" placeholder="Enter a number">
+
+    <button onclick="setNumber()">Set Number</button>
+
+
+
+    <button onclick="getValues()">Refresh Values</button>
+
+
+
+    <button id="connectWalletButton" onclick="connectWallet()">Connect Wallet</button>
+
+
+
+    <script>
+
+        let provider;
+
+        let signer;
+
+        let contract;
+
+
+
+        const contractAddress = "0xB360D823eD7B31B1B69d29B6A9a62C4DFdfD6C31";  // Replace this after deployment
+
+        const abi = [
+
+            { "inputs": [{ "internalType": "string", "name": "newOutput", "type": "string" }], "name": "Set_Word", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+
+            { "inputs": [{ "internalType": "int256", "name": "newNumber", "type": "int256" }], "name": "Set_Number", "outputs": [], "stateMutability": "nonpayable", "type": "function" },
+
+            { "inputs": [], "name": "output", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" },
+
+            { "inputs": [], "name": "number", "outputs": [{ "internalType": "int256", "name": "", "type": "int256" }], "stateMutability": "view", "type": "function" }
+
+        ];
+
+
+
+        async function connectWallet() {
+
+            if (window.ethereum) {
+
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+
+                signer = provider.getSigner();
+
+                contract = new ethers.Contract(contractAddress, abi, signer);
+
+                
+
+                // Request account access
+
+                try {
+
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+                    document.getElementById('connectWalletButton').style.display = 'none';  // Hide the button after connecting
+
+                    getValues();  // Load contract values after connection
+
+                    console.log("Wallet connected:", await signer.getAddress());
+
+                } catch (err) {
+
+                    console.error("Connection failed", err);
+
+                }
+
+            } else {
+
+                alert("Please install MetaMask!");
+
+            }
+
+        }
+
+
+
+        async function getValues() {
+
+            try {
+
+                const outputValue = await contract.output();
+
+                const numberValue = await contract.number();
+
+                document.getElementById("output").innerText = outputValue;
+
+                document.getElementById("number").innerText = numberValue;
+
+            } catch (error) {
+
+                console.error("Error fetching values:", error);
+
+            }
+
+        }
+
+
+
+        async function setWord() {
+
+            try {
+
+                const newWord = document.getElementById("newWord").value;
+
+                const tx = await contract.Set_Word(newWord);
+
+                await tx.wait();  // Wait for confirmation
+
+                alert("Word updated!");
+
+                getValues();  // Refresh values
+
+            } catch (error) {
+
+                console.error("Error setting word:", error);
+
+            }
+
+        }
+
+
+
+        async function setNumber() {
+
+            try {
+
+                const newNumber = document.getElementById("newNumber").value;
+
+                const tx = await contract.Set_Number(newNumber);
+
+                await tx.wait();  // Wait for confirmation
+
+                alert("Number updated!");
+
+                getValues();  // Refresh values
+
+            } catch (error) {
+
+                console.error("Error setting number:", error);
+
+            }
+
+        }
+
+
+
+        // Try to load contract values if wallet is already connected
+
+        if (window.ethereum && window.ethereum.selectedAddress) {
+
+            connectWallet();
+
+        } else {
+
+            document.getElementById('connectWalletButton').style.display = 'block';  // Show connect button if not connected
+
+        }
+
+    </script>
+
+
+
+</body>
+
+</html>
